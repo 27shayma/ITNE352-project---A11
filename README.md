@@ -1,4 +1,4 @@
-## Project Title
+## The Project Title
 # News Aggregator and Distribution Server
 
 ## Project Description
@@ -11,12 +11,9 @@ S2 2023-2024
 - Group Name:A11
 - Course Code:ITNE352
 - Section:1
-- Students Name: 
-  1. Shaima Waleed Mohammed 
-  2. 
-- Student ID:
-  1. 202103160
-  2. 2021
+- Students Name -ID: 
+  1. Shaima Waleed Mohammed -202103160
+  2. Ali-2021
 
 ## Table of Contents
 1. [Requirements](#Requirements)
@@ -31,7 +28,7 @@ S2 2023-2024
 To set up and ensure an efficient run of this project on your local machine, follow these instructions:
 
 ### Prerequisites
-- **1-Python**: Ensure Python is installed on your system , if not please download it from their website [python.org]or go to this link (https://www.python.org/downloads/).
+- **1-Python**: You need to ensure Python is installed on your system, if not please download it from their website [python.org]or go to this link (https://www.python.org/downloads/).
 - **2-NewsAPI Key**: You need to Sign up on their website [NewsAPI.org](https://newsapi.org/) in order to get your API key.
 
 ### Setup
@@ -40,49 +37,46 @@ To set up and ensure an efficient run of this project on your local machine, fol
 3. **Activate the virtual environment**
 
 ## How to Run the System
-### First Start the Server : `python server.py`
-### Then Run the Client : `python client.py `
-After this you need to write your name when prompted and through the menu options navigate to search for the news headlines or list sources.
+### First Start the Server file: `python server.py`
+### Then Run the Client file: `python client.py `
+After this, you need to write your name when prompted and through the menu options navigate to search for the news headlines or list sources.
 
 ## Project Scripts
 ### 1-Server Script (server.py)
-The server script retrieves news updates from NewsAPI.org and manages multiple client connections using multithreading. It handles different types of requests and sends the appropriate responses to the clients.
+The server script is designed to manage multiple client connections handle their requests for news information and retrieve news updates from NewsAPI.org.
 
-#### Main Functionalities:
-Fetching news from NewsAPI based on different endpoints and parameters.
-Handling multiple simultaneous client connections.
-Sending JSON responses to clients.
-Logging client connections and requests.
+#### Main Server Functionalities:
+The server performs the following duties:
+1-Startup and Connection Handling: The server initializes and waits for client connections. It can manage at least three simultaneous connections, displaying the client's name upon connection.
+2-Request Handling: The server receives and processes client requests. It connects to NewsAPI.org to fetch relevant data, stores the data in a JSON file for testing, and sends a list of brief news details to the client.
+3-Detail Retrieval: Upon client selection of a specific news item, the server sends detailed information about the chosen item.
 
 #### Utilized Packages:
-socket for network communication.
-threading for handling multiple clients.
-requests for fetching news from NewsAPI.
-json for processing JSON data.
+
 
 ### 2-Client Script (client.py)
-The client script presents a menu system to the user, allowing them to search for news headlines or list sources. It sends requests to the server and displays the results.
+The client script is responsible for interacting with the server to request and display news information. Requests are sent to the server to display the results.
 
-#### Main Functionalities:
-Sending requests to the server based on user input.
-Displaying news headlines and sources.
-Navigating through a hierarchical menu system.
+#### Main Client Functionalities:
+The client performs the following tasks:
+1-Connection Establishment: The client connects to the server, sending its username for identification.
+2-Menu Display and Navigation: The client presents a main menu with various options. Users can navigate through the menus to request different types of news information, view lists of results, or return to previous menus.
+3-Request Sending and Response Handling: The client sends requests based on user selections and displays the server's responses in an organized manner.
 
 #### Utilized Packages:
-socket for network communication.
-json for processing JSON data.
+
 
 ## Additional Concepts
-### Multithreading
-The server uses multithreading to handle multiple clients simultaneously. This allows the server to manage several connections at once without blocking.
+### M
+-
 
 ## Acknowledgments
-Special thanks to our professor Dr. Mohammed Almeer for providing guidance and resources for this project.
-Thanks to NewsAPI for providing the news data used in this project.
+I would like to express my sincere gratitude to Dr. Mohammed Almeer for his invaluable guidance and support throughout this project. His insights and help were instrumental in the successful completion of this work. Additionally, I would like to thank NewsAPI for providing the news data used in this project. Their service was crucial in gathering the necessary information.
 
 ## Conclusion
-This project demonstrates the implementation of a client-server architecture for retrieving and displaying news data. It highlights the use of network communication, multithreading, and API integration in Python.
+This project built a multithreaded news client/server system using Python, effectively integrating NewsAPI.org for real-time news retrieval and distribution. It demonstrated key programming concepts like network communication, multithreading, and API.
 
 ## Resources
-### Python Documentation : [python.org](https://www.python.org/downloads/).
-### NewsAPI Documentation : [NewsAPI.org](https://newsapi.org/)
+### Python : [python.org](https://www.python.org/downloads/).
+### NewsAPI : [NewsAPI.org](https://newsapi.org/)
+### Git : [https://git-scm.com/downloads)
