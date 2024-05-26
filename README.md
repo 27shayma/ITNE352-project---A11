@@ -1,5 +1,5 @@
 ## The Project Title
-# News Aggregator and Distribution Server
+# Multithreaded News Client/Server Information System
 
 ## Project Description
 This project involves creating a client-server system to exchange current news information. The system will focus on key aspects of client-server architecture, network communication, multithreading, APIs, and coding best practices. The server, written in Python, retrieves news updates from NewsAPI.org, handles multiple client connections simultaneously, and responds to various client requests. The client script, also written in Python, connects to the server to fetch and display news and sources. Users can navigate through options to get specific news details or quit the application.
