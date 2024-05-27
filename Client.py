@@ -1,141 +1,189 @@
 import socket
-import PySimpleGUI as psg
-import signal
-import sys
+import tkinter as tk
+from tkinter import ttk, simpledialog, messagebox
+import json
+import logging
 
-# Theme for the PySimpleGUI windows
-psg.theme('TealMono')
 
-# Functions
-# Creation Function: To create a PySimpleGUI window with a specific title & layout
-def Creation(title, layout):
-    window= psg.Window(title, layout, resizable=True)
-    return window
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# ShowF Function: To display data in the PySimpleGUI window
-def ShowF(title, data):
-    layout = [
-        [psg.Text("*"*10 + title + "*"*10, font=('Arial',12, 'bold'))],
-        [psg.Column([[psg.Text(data, font=('Arial',10))]], scrollable=True)],
-        [psg.Button('OK')]
-    ]
-    window = Creation(title, layout)
-    event, value = window.read()
-    window.close()
+class NewsClientApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("News Client")
+        self.root.geometry("600x400")
 
-# Signal_Handler Function: To handle the Ctrl+C signal with by sending a termination message
-def Signal_Handler(sig, frame):
-    termination_message = "User is terminating the connection"
-    client_socket.send(termination_message.encode("utf-8"))
+        self.client_socket = None
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.main_frame = ttk.Frame(self.root)
+        self.main_frame.pack(fill="both", expand=True)
+
+        self.username_label = ttk.Label(self.main_frame, text="Enter your name:")
+        self.username_label.pack(pady=10)
+        self.username_entry = ttk.Entry(self.main_frame)
+        self.username_entry.pack(pady=10)
+
+        self.connect_button = ttk.Button(self.main_frame, text="Connect", command=self.connect_to_server)
+        self.connect_button.pack(pady=10)
+
+        self.menu_frame = ttk.Frame(self.root)
+
+        self.menu_label = ttk.Label(self.menu_frame, text="Main Menu")
+        self.menu_label.pack(pady=10)
+
+        self.headlines_button = ttk.Button(self.menu_frame, text="Search Headlines", command=self.show_headlines_menu)
+        self.headlines_button.pack(pady=5)
+
+        self.sources_button = ttk.Button(self.menu_frame, text="List of Sources", command=self.show_sources_menu)
+        self.sources_button.pack(pady=5)
+
+        self.quit_button = ttk.Button(self.menu_frame, text="Quit", command=self.quit_application)
+        self.quit_button.pack(pady=5)
+
+        self.headlines_frame = ttk.Frame(self.root)
+        self.sources_frame = ttk.Frame(self.root)
+
+        self.create_headlines_menu()
+        self.create_sources_menu()
+
+    def connect_to_server(self):
+        username = self.username_entry.get()
+        if not username:
+            messagebox.showerror("Error", "Please enter your name")
+            return
+        try:
+            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client_socket.connect(('localhost', 5555))
+            self.client_socket.send(username.encode('utf-8'))
+            self.main_frame.pack_forget()
+            self.menu_frame.pack(fill="both", expand=True)
+        except Exception as e:
+            messagebox.showerror("Connection Error", f"Unable to connect to server: {e}")
+            logging.error(f"Failed to connect to server: {e}")
+
+    def show_headlines_menu(self):
+        self.menu_frame.pack_forget()
+        self.headlines_frame.pack(fill="both", expand=True)
+
+    def show_sources_menu(self):
+        self.menu_frame.pack_forget()
+        self.sources_frame.pack(fill="both", expand=True)
+
+    def back_to_main_menu(self):
+        self.headlines_frame.pack_forget()
+        self.sources_frame.pack_forget()
+        self.menu_frame.pack(fill="both", expand=True)
+
+    def create_headlines_menu(self):
+        self.headlines_label = ttk.Label(self.headlines_frame, text="Headlines Menu")
+        self.headlines_label.pack(pady=10)
+
+        self.keyword_button = ttk.Button(self.headlines_frame, text="Search for Keywords", command=lambda: self.search_headlines('keyword'))
+        self.keyword_button.pack(pady=5)
+
+        self.category_button = ttk.Button(self.headlines_frame, text="Search by Category", command=lambda: self.search_headlines('category'))
+        self.category_button.pack(pady=5)
+
+        self.country_button = ttk.Button(self.headlines_frame, text="Search by Country", command=lambda: self.search_headlines('country'))
+        self.country_button.pack(pady=5)
+
+        self.all_headlines_button = ttk.Button(self.headlines_frame, text="List All New Headlines", command=lambda: self.search_headlines('all'))
+        self.all_headlines_button.pack(pady=5)
+
+        self.back_button = ttk.Button(self.headlines_frame, text="Back to Main Menu", command=self.back_to_main_menu)
+        self.back_button.pack(pady=5)
+
+        self.results_text = tk.Text(self.headlines_frame, wrap='word', height=15, width=70)
+        self.results_text.pack(pady=10)
+
+    def create_sources_menu(self):
+        self.sources_label = ttk.Label(self.sources_frame, text="Sources Menu")
+        self.sources_label.pack(pady=10)
+
+        self.sources_category_button = ttk.Button(self.sources_frame, text="Search by Category", command=lambda: self.search_sources('category'))
+        self.sources_category_button.pack(pady=5)
+
+        self.sources_country_button = ttk.Button(self.sources_frame, text="Search by Country", command=lambda: self.search_sources('country'))
+        self.sources_country_button.pack(pady=5)
+
+        self.sources_language_button = ttk.Button(self.sources_frame, text="Search by Language", command=lambda: self.search_sources('language'))
+        self.sources_language_button.pack(pady=5)
+
+        self.all_sources_button = ttk.Button(self.sources_frame, text="List All Sources", command=lambda: self.search_sources('all'))
+        self.all_sources_button.pack(pady=5)
+
+        self.back_button = ttk.Button(self.sources_frame, text="Back to Main Menu", command=self.back_to_main_menu)
+        self.back_button.pack(pady=5)
+
+        self.results_text = tk.Text(self.sources_frame, wrap='word', height=15, width=70)
+        self.results_text.pack(pady=10)
+
+    def search_headlines(self, search_type):
+        if search_type == 'keyword':
+            keyword = simpledialog.askstring("Input", "Enter keyword:")
+            request = f'headlines?q={keyword}'
+        elif search_type == 'category':
+            category = simpledialog.askstring("Input", "Enter category:")
+            request = f'headlines?category={category}'
+        elif search_type == 'country':
+            country = simpledialog.askstring("Input", "Enter country:")
+            request = f'headlines?country={country}'
+        elif search_type == 'all':
+            request = 'headlines?country=us'  # Default parameter to ensure a successful request
+        else:
+            return
+
+        self.client_socket.send(request.encode('utf-8'))
+        response = self.client_socket.recv(4096).decode('utf-8')
+        self.results_text.delete(1.0, tk.END)
+        self.results_text.insert(tk.END, json.loads(response)['data'])
+
+    def search_sources(self, search_type):
+        if search_type == 'category':
+            category = simpledialog.askstring("Input", "Enter category:")
+            request = f'sources?category={category}'
+        elif search_type == 'country':
+            country = simpledialog.askstring("Input", "Enter country:")
+            request = f'sources?country={country}'
+        elif search_type == 'language':
+            language = simpledialog.askstring("Input", "Enter language:")
+            request = f'sources?language={language}'
+        elif search_type == 'all':
+            request = 'sources?country=us'  # Default parameter to ensure a successful request
+        else:
+            return
+
+        self.client_socket.send(request.encode('utf-8'))
+        response = self.client_socket.recv(4096).decode('utf-8')
+        self.results_text.delete(1.0, tk.END)
+        self.results_text.insert(tk.END, json.loads(response)['data'])
+
+    def back_to_main_menu(self):
+        self.notebook.select(self.main_menu_frame)
+
+    def main_menu(self):
+        self.main_menu_button = ttk.Button(self.main_menu_frame, text="Back to Main Menu", command=self.main_menu)
+        self.main_menu_button.pack(pady=10)
+
+        self.headlines_button = ttk.Button(self.main_menu_frame, text="Headlines Menu", command=lambda: self.notebook.select(self.headlines_frame))
+        self.headlines_button.pack(pady=5)
+
+        self.sources_button = ttk.Button(self.main_menu_frame, text="Sources Menu", command=lambda: self.notebook.select(self.sources_frame))
+        self.sources_button.pack(pady=5)
+
+        self.quit_button = ttk.Button(self.main_menu_frame, text="Quit", command=self.destroy)
+        self.quit_button.pack(pady=5)
+
+
+if __name__ == '__main__':
+    root = tk.Tk()
+    root.title("News Search")
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect(('localhost', 12345))
+    app = NewsSearchApp(root, client_socket)
+    app.mainloop()
     client_socket.close()
-    sys.exit(0)
-
-# Register the signal handler for Ctrl+C
-signal.signal(signal.SIGINT, Signal_Handler)
-
-# Input_Window Function: To create an input window & handle the user's input
-def Input_Window (title, layout):
-    window = Creation(title, layout)
-    while True:
-        event, values = window.read()
-        if event in (psg.WINDOW_CLOSED, 'Cancel'):
-            window.close()
-            return None
-        if values['-INPUT-']:
-            input=values['-INPUT-']
-            window.close()
-            return input
-
-# Socket is created
-client_socket= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# Step one: establishing the connection to the server
-server_ip = '127.0.0.2'
-server_port = 55555
-
-# Exception Handling
-try:
-    # Establishes a connection to the server
-    client_socket.connect((server_ip, server_port))
-    print("Connected to the server.")
-except ConnectionRefusedError:
-    psg.PopupError("Connection refused. Make sure the server is running.")
-    exit()
-except Exception as e:
-    print(f"An error occurred while connecting to the server: {e}")
-    exit()
-
-# User is prompted to enter their username
-username_layout = [
-    [psg.Text("Please enter your username: ", font=("Arial Bold", 14))],
-    [psg.Input(key="-INPUT-", font=("Arial", 12))],
-    [psg.Submit(),psg.Cancel()]
-]
-
-# User is prompted to enter their API key
-api_key_layout = [
-    [psg.Text("Please enter your NewsAPI.org API key: ", font=("Arial Bold", 14))],
-    [psg.Input(key="-INPUT-", font=("Arial", 12))],
-    [psg.Submit(),psg.Cancel()]
-]
-
-# User is prompted to enter the country code
-country_code_layout = [
-    [psg.Text("Please enter the country code (2-letter ISO 3166-1 format): ", font=("Arial Bold", 14))],
-    [psg.Input(key="-INPUT-", font=("Arial", 12))],
-    [psg.Submit(),psg.Cancel()]
-]
-
-# User is prompted to enter their API key
-api_key = Input_Window("API Key", api_key_layout)
-
-# User is prompted to enter the country code
-country_code = Input_Window("Country Code", country_code_layout)
-
-# The inserted API key is sent to the server
-client_socket.send(api_key.encode('utf-8'))
-
-# The inserted country codeis sent to the server
-client_socket.send(country_code.encode('utf-8'))
-
-# User is prompted to enter their username
-user = Input_Window("Username", username_layout)
-
-# The inserted username is sent to the server
-client_socket.send((user).encode('utf-8'))
-
-# Infinite loop to handle the user's options.
-while True:
-    options_layout = [
-        [psg.Text("Choose one of the following options: ",font=("Arial", 12))],
-        [psg.Text("1. Top Headlines",font=("Arial", 12))],
-        [psg.Text("2. Sources",font=("Arial", 12))],
-        [psg.Text("3. Quit",font=("Arial", 12))],
-        [psg.Text('Choose a number between 1-3:',font=("Arial Bold", 14)), psg.Input(key="-INPUT-",font=("Arial", 14))],
-        [psg.Button('Send'), psg.Button('Cancel')]
-    ]
-
-# User is prompted to choose from the options listed
-    option= Input_Window('Options', options_layout)
-
-# The option selected is sent to the server
-    client_socket.send((option).encode('utf-8'))
-
-# Top headlines are displayed
-    if option == '1':
-        data = client_socket.recv(20480).decode("utf-8")
-        ShowF('Top Headlines', data)
-
-# Sources are displayed
-    elif option == '2':
-        data = client_socket.recv(20480).decode("utf-8")
-        ShowF('Sources', data)
-
-# The user is prompted to enter their API key
-    elif option == "3":
-        client_socket.send((user + " is disconnected").encode("utf-8"))
-        print("Quitting...")
-        client_socket.close()
-        psg.popup("Connection terminated.")
-        print("Connection terminated!")
-        sys.exit(0)
