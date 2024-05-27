@@ -52,7 +52,10 @@ The server performs the following duties:
 3-Detail Retrieval: Upon client selection of a specific news item, the server sends detailed information about the chosen item.
 
 #### Utilized Packages:
-
+socket
+requests
+json
+threading
 
 ### 2-Client Script (client.py)
 The client script is responsible for interacting with the server to request and display news information. Requests are sent to the server to display the results.
@@ -64,7 +67,10 @@ The client performs the following tasks:
 3-Request Sending and Response Handling: The client sends requests based on user selections and displays the server's responses in an organized manner.
 
 #### Utilized Packages:
-
+socket
+PySimpleGUI
+signal
+sys
 
 ## Additional Concepts
 ### M
