@@ -73,8 +73,11 @@ signal
 sys
 
 ## Additional Concepts
-### M
--
+### JSON
+Is a serialization that convert data into series of bytes or special
+string objects, it is used in storing data and transfer the data btween processes
+### Multithrding 
+Multithreading refers to the ability of a CPU (or a single process within an operating system) to provide multiple threads of execution concurrently, properly supported by the operating system. 
 
 ## Acknowledgments
 I would like to express my sincere gratitude to Dr. Mohammed Almeer for his invaluable guidance and support throughout this project. His insights and help were instrumental in the successful completion of this work. Additionally, I would like to thank NewsAPI for providing the news data used in this project. Their service was crucial in gathering the necessary information.
