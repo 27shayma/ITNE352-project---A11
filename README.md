@@ -85,4 +85,4 @@ This project built a multithreaded news client/server system using Python, effec
 ## Resources
 ### Python : [python.org](https://www.python.org/downloads/).
 ### NewsAPI : [NewsAPI.org](https://newsapi.org/)
-### Git : [https://git-scm.com/downloads)
+### Git : [git-scm.com](https://git-scm.com/downloads)
