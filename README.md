@@ -56,6 +56,7 @@ socket
 requests
 json
 threading
+datetime
 
 ### 2-Client Script (client.py)
 The client script is responsible for interacting with the server to request and display news information. Requests are sent to the server to display the results.
@@ -68,9 +69,9 @@ The client performs the following tasks:
 
 #### Utilized Packages:
 socket
+json
 PySimpleGUI
-signal
-sys
+
 
 ## Additional Concepts
 ### JSON
