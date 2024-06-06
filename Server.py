@@ -1,133 +1,73 @@
 import socket
-import requests
-import json
 import threading
+import json
+import requests
+from datetime import datetime
 
-print('=' * 5, 'Welcome to our server! Our server is on.', '=' * 5, '\n')
+API_KEY = '366c79feda1a41a1a380f1feb8ca4d42'
+GROUP_ID = 'A11'
 
-api_key = input("Please enter your NewsAPI.org API key: ")
-country_code = input("Please enter the country code (2-letter ISO 3166-1 format): ")
+class NewsServer:
+    def __init__(self, host='127.0.0.1', port=65432):
+        self.host = host
+        self.port = port
+        self.clients = {}
 
-url = f'https://newsapi.org/v2/top-headlines?country={country_code}&apiKey={api_key}'
+    def start_server(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.bind((self.host, self.port))
+        self.sock.listen(5)
+        print("Server started. Waiting for clients...")
+        while True:
+            client, address = self.sock.accept()
+            threading.Thread(target=self.handle_client, args=(client,)).start()
 
-response = requests.get(url)
-
-if response.status_code != 200:
-    print("Error! Failed to retrieve data. Status code:", response.status_code)
-else:
-    with open("group_ID.json", "w") as file:
-        json.dump(response.json(), file, indent=4)
-    print("Retrieved data is added successfully!")
-    print('-' * 15)
-
-def connect(client_socket, address, thread_no):
-    print('\n', '+' * 5, 'Thread:', thread_no, 'is ready to receive the username from the client with address:',
-          address, '+' * 5)
-    try:
-        username = client_socket.recv(2048).decode('utf-8')
-        if username == "User is terminating the connection":
-            print('\nUnknown User (No username) terminated its connection')
-            print('Currently connected clients are: ', clients)
-            print('~' * 10)
-        elif username == '':
-            print(f"Thread {thread_no}: User did not enter a username. Closing connection.")
-            client_socket.close()
-            return
-        else:
-            print('\n', username, 'is connected to the server')
-            clients.append(username)
-            print('\nCurrently connected clients are: ', clients)
-    except ConnectionResetError:
-        print("Connection with address", address, "closed!")
-        return
-
-    while True:
-        counter = 0
+    def handle_client(self, client):
+        client_name = client.recv(1024).decode()
+        self.clients[client_name] = client
+        print(f"Client {client_name} connected.")
         try:
-            option = client_socket.recv(2048).decode('utf-8')
-            if option == '1':
-                print(username, 'chose the option number', option, ": Top Headlines")
-            elif option == '2':
-                print(username, 'chose the option number', option, ": Sources")
-            else:
-                print('\n', username, ' is disconnected')
-                clients.remove(username)
-                print('~' * 10)
-                client_socket.close()
-                return
-        except ConnectionResetError:
-            print('\n', username, ' connection was reset by the server.')
-            clients.remove(username)
-            client_socket.close()
-            return
+            while True:
+                request = client.recv(1024).decode()
+                if request == "QUIT":
+                    print(f"Client {client_name} disconnected.")
+                    del self.clients[client_name]
+                    client.close()
+                    break
+                response = self.process_request(client_name, request)
+                client.sendall(response.encode())
+        except (ConnectionResetError, BrokenPipeError):
+            print(f"Client {client_name} disconnected unexpectedly.")
+            del self.clients[client_name]
+            client.close()
 
-        with open('group_ID.json', 'r') as file:
-            data = json.load(file)
+    def process_request(self, client_name, request):
+        request_data = json.loads(request)
+        option = request_data.get('option')
+        parameters = request_data.get('parameters', {})
+        
+        if option == "headlines":
+            url = 'https://newsapi.org/v2/top-headlines'
+        elif option == "sources":
+            url = 'https://newsapi.org/v2/sources'
+        else:
+            return "Invalid option."
 
-        if option == '1':
-            info = []
-            for article in data['articles']:
-                counter += 1
-                article_info = (
-                    f"\n Headline: {counter}",
-                    f"\n Title: {article['title']}",
-                    f"\n Description: {article['description']}",
-                    f"\n Author: {article['author']}",
-                    f"\n Url: {article['url']}",
-                    f"\n Publish Date: {article['publishedAt']}",
-                    "\n" + "-" * 20
-                )
-                info.append(article_info)
-            if not info:
-                info = ['No headlines were found.']
-            info = '\n'.join(' '.join(article_tuple) for article_tuple in info)
-            try:
-                client_socket.send(info.encode('utf-8'))
-            except ConnectionResetError:
-                print("Failed to send data. Connection reset by client.")
-                clients.remove(username)
-                client_socket.close()
-                return
+        params = {'apiKey': API_KEY, **parameters}
+        response = requests.get(url, params=params)
+        data = response.json()
 
-        elif option == '2':
-            info = []
-            url_sources = f'https://newsapi.org/v2/sources?apiKey={api_key}'
-            response_sources = requests.get(url_sources)
-            if response_sources.status_code == 200:
-                data_sources = response_sources.json()
-                for source in data_sources['sources']:
-                    counter += 1
-                    source_info = (
-                        f"\n Source: {counter}",
-                        f"\n Name: {source['name']}",
-                        f"\n Description: {source['description']}",
-                        f"\n Url: {source['url']}",
-                        f"\n Category: {source['category']}",
-                        f"\n Language: {source['language']}",
-                        "\n" + "-" * 20
-                    )
-                    info.append(source_info)
-            if not info:
-                info = ['No sources were found.']
-            info = '\n'.join(' '.join(source_tuple) for source_tuple in info)
-            try:
-                client_socket.send(info.encode('utf-8'))
-            except ConnectionResetError:
-                print("Failed to send data. Connection reset by client.")
-                clients.remove(username)
-                client_socket.close()
-                return
+        filename = f"{GROUP_ID}_{client_name}_{option}.json"
+        with open(filename, 'w') as f:
+            json.dump(data, f)
 
-clients = []
-thread_count = 0
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-ip = '127.0.0.1'
-port = 12345
-server_socket.bind((ip, port))
-server_socket.listen()
-print(f"Server is listening on {ip}:{port}")
-while True:
-    client_socket, address = server_socket.accept()
-    thread_count += 1
-    t = threading.Thread(target=connect, args=(client_socket, address, thread_count))
-    t.start()
+        if option == "headlines":
+            results = [{'source': article['source']['name'], 'author': article['author'], 'title': article['title']} for article in data.get('articles', [])[:15]]
+        elif option == "sources":
+            results = [{'name': source['name'], 'country': source['country'], 'description': source['description'], 'url': source['url'], 'category': source['category'], 'language': source['language']} for source in data.get('sources', [])[:15]]
+        
+        return json.dumps(results)
+
+if __name__ == "__main__":
+    server = NewsServer()
+    server.start_server()
